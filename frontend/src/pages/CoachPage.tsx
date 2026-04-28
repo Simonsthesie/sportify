@@ -29,6 +29,7 @@ export default function CoachPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -38,19 +39,56 @@ export default function CoachPage() {
   };
   useEffect(() => { load(); }, []);
 
-  const onCreate = async (e: FormEvent) => {
-    e.preventDefault(); setError(null);
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+    setError(null);
+    setInfo(null);
+  };
+
+  const openEdit = (s: Seance) => {
+    setEditingId(s.id);
+    setForm({
+      titre: s.titre,
+      description: s.description ?? '',
+      categorie: s.categorie ?? '',
+      dateDebut: toDatetimeLocal(s.dateDebut),
+      dateFin: toDatetimeLocal(s.dateFin),
+      capaciteMax: s.capaciteMax,
+      lieu: s.lieu ?? '',
+    });
+    setShowForm(true);
+    setError(null);
+    setInfo(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  };
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const payload = {
+      ...form,
+      capaciteMax: Number(form.capaciteMax),
+      dateDebut: new Date(form.dateDebut).toISOString(),
+      dateFin: new Date(form.dateFin).toISOString(),
+      categorie: form.categorie || undefined,
+    };
     try {
-      await seancesApi.create({
-        ...form,
-        capaciteMax: Number(form.capaciteMax),
-        dateDebut: new Date(form.dateDebut).toISOString(),
-        dateFin: new Date(form.dateFin).toISOString(),
-        categorie: form.categorie || undefined,
-      });
-      setInfo('Seance creee !');
-      setForm(emptyForm);
-      setShowForm(false);
+      if (editingId !== null) {
+        await seancesApi.update(editingId, payload);
+        setInfo('Seance mise a jour !');
+      } else {
+        await seancesApi.create(payload);
+        setInfo('Seance creee !');
+      }
+      closeForm();
       await load();
     } catch (err) { setError(err instanceof Error ? err.message : 'Erreur'); }
   };
@@ -83,26 +121,31 @@ export default function CoachPage() {
           <h1 className="page-title">Mon planning</h1>
           <p className="page-subtitle">{seances.length} seance{seances.length > 1 ? 's' : ''} au total</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? '✕ Annuler' : '+ Nouvelle seance'}
+        <button className="btn-primary" onClick={showForm && !editingId ? closeForm : openCreate}>
+          {showForm && !editingId ? '✕ Annuler' : '+ Nouvelle seance'}
         </button>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}
       {info  && <Alert type="success">{info}</Alert>}
 
-      {/* Formulaire de creation */}
+      {/* Formulaire creation / edition */}
       {showForm && (
         <div className="card border-brand-200 dark:border-brand-800 animate-slide-up">
-          <h2 className="section-title mb-4">Nouvelle seance</h2>
-          <form onSubmit={onCreate} className="grid gap-4 md:grid-cols-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="section-title">
+              {editingId ? '✏️ Modifier la seance' : '+ Nouvelle seance'}
+            </h2>
+            <button type="button" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onClick={closeForm}>✕</button>
+          </div>
+          <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="label">Titre</label>
               <input className="input" required placeholder="Ex: Yoga du matin" value={form.titre}
                 onChange={(e) => setForm({ ...form, titre: e.target.value })} />
             </div>
 
-            {/* Categorie — choix visuel */}
+            {/* Categorie — grille visuelle */}
             <div className="md:col-span-2">
               <label className="label">Categorie de sport</label>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-7">
@@ -155,8 +198,11 @@ export default function CoachPage() {
               <input className="input" placeholder="Salle 1, Box A..." value={form.lieu}
                 onChange={(e) => setForm({ ...form, lieu: e.target.value })} />
             </div>
-            <div className="md:col-span-2">
-              <button type="submit" className="btn-primary w-full">Creer la seance</button>
+            <div className="md:col-span-2 flex gap-3">
+              <button type="submit" className="btn-primary flex-1">
+                {editingId ? 'Enregistrer les modifications' : 'Creer la seance'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={closeForm}>Annuler</button>
             </div>
           </form>
         </div>
@@ -177,21 +223,27 @@ export default function CoachPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* A venir */}
           {upcoming.length > 0 && (
             <div>
               <h2 className="section-title mb-3">A venir ({upcoming.length})</h2>
               <div className="space-y-3">
-                {upcoming.map((s) => <SeanceCard key={s.id} seance={s} participants={participants} onDelete={onDelete} onToggle={toggleParticipants} />)}
+                {upcoming.map((s) => (
+                  <SeanceCard key={s.id} seance={s} participants={participants}
+                    onEdit={openEdit} onDelete={onDelete} onToggle={toggleParticipants}
+                    isEditing={editingId === s.id} />
+                ))}
               </div>
             </div>
           )}
-          {/* Passees */}
           {past.length > 0 && (
             <div>
               <h2 className="section-title mb-3 text-slate-500">Passees ({past.length})</h2>
               <div className="space-y-3 opacity-70">
-                {past.map((s) => <SeanceCard key={s.id} seance={s} participants={participants} onDelete={onDelete} onToggle={toggleParticipants} />)}
+                {past.map((s) => (
+                  <SeanceCard key={s.id} seance={s} participants={participants}
+                    onEdit={openEdit} onDelete={onDelete} onToggle={toggleParticipants}
+                    isEditing={editingId === s.id} />
+                ))}
               </div>
             </div>
           )}
@@ -201,17 +253,19 @@ export default function CoachPage() {
   );
 }
 
-function SeanceCard({ seance: s, participants, onDelete, onToggle }: {
+function SeanceCard({ seance: s, participants, onEdit, onDelete, onToggle, isEditing }: {
   seance: Seance;
   participants: Record<number, Reservation[]>;
+  onEdit: (s: Seance) => void;
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
+  isEditing: boolean;
 }) {
   const emoji = s.categorie ? (CATEGORY_EMOJI[s.categorie] ?? '🏅') : '🏅';
   const full = s.placesPrises >= s.capaciteMax;
 
   return (
-    <div className="card">
+    <div className={'card transition-all ' + (isEditing ? 'ring-2 ring-brand-500' : '')}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="sport-icon text-xl">{emoji}</div>
@@ -220,6 +274,7 @@ function SeanceCard({ seance: s, participants, onDelete, onToggle }: {
               <h2 className="font-bold text-slate-900 dark:text-white">{s.titre}</h2>
               {s.categorie && <span className="badge-primary">{s.categorie}</span>}
               {full && <span className="badge-danger">Complet</span>}
+              {isEditing && <span className="badge-warning">En cours de modification</span>}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {formatDateTime(s.dateDebut)} → {formatDateTime(s.dateFin)}
@@ -234,6 +289,7 @@ function SeanceCard({ seance: s, participants, onDelete, onToggle }: {
           <button className="btn-secondary" onClick={() => onToggle(s.id)}>
             {participants[s.id] ? 'Masquer' : 'Participants'}
           </button>
+          <button className="btn-secondary" onClick={() => onEdit(s)}>✏️ Modifier</button>
           <button className="btn-danger" onClick={() => onDelete(s.id)}>Supprimer</button>
         </div>
       </div>
@@ -242,7 +298,7 @@ function SeanceCard({ seance: s, participants, onDelete, onToggle }: {
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-dark-600">
         <div
           className={'h-full rounded-full ' + (full ? 'bg-red-500' : s.placesPrises / s.capaciteMax > 0.75 ? 'bg-amber-500' : 'bg-emerald-500')}
-          style={{ width: `${(s.placesPrises / s.capaciteMax) * 100}%` }}
+          style={{ width: `${Math.min(100, (s.placesPrises / s.capaciteMax) * 100)}%` }}
         />
       </div>
 
@@ -269,8 +325,6 @@ function SeanceCard({ seance: s, participants, onDelete, onToggle }: {
           )}
         </div>
       )}
-
-      <input type="hidden" value={toDatetimeLocal(s.dateDebut)} />
     </div>
   );
 }

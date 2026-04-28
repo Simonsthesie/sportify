@@ -12,6 +12,7 @@ import seancesRoutes from './modules/seances/seances.routes';
 import reservationsRoutes from './modules/reservations/reservations.routes';
 import avisRoutes from './modules/avis/avis.routes';
 import notificationsRoutes from './modules/notifications/notifications.routes';
+import coachesRoutes from './modules/coaches/coaches.routes';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 
 export function createApp(): Application {
@@ -34,6 +35,7 @@ export function createApp(): Application {
   app.use('/api/reservations', reservationsRoutes);
   app.use('/api/avis', avisRoutes);
   app.use('/api/notifications', notificationsRoutes);
+  app.use('/api/coaches', coachesRoutes);
 
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.get('/api/docs.json', (_req: Request, res: Response) => {

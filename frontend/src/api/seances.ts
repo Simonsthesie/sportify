@@ -1,6 +1,13 @@
 import { api } from './client';
 import type { Seance, Reservation } from '../types';
 
+export interface CoachInfo {
+  id: number;
+  specialite: string;
+  bio?: string | null;
+  utilisateur: { id: number; nom: string; prenom: string; email: string };
+}
+
 export interface SeanceInput {
   titre: string;
   description?: string;
@@ -9,10 +16,17 @@ export interface SeanceInput {
   dateFin: string;
   capaciteMax: number;
   lieu?: string;
+  coachId?: number;
 }
 
+export const coachesApi = {
+  list() {
+    return api<CoachInfo[]>('/coaches');
+  },
+};
+
 export const seancesApi = {
-  list(params?: { q?: string; coachId?: number; lieu?: string; dateFrom?: string; dateTo?: string; page?: number; limit?: number }) {
+  list(params?: { q?: string; coachId?: number; lieu?: string; categorie?: string; dateFrom?: string; dateTo?: string; page?: number; limit?: number }) {
     const qs = params ? '?' + new URLSearchParams(
       Object.fromEntries(
         Object.entries(params)
