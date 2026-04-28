@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { seancesController } from './seances.controller';
 import { authenticate, authorize } from '../../middlewares/auth';
 import { validate } from '../../middlewares/validate';
-import { createSeanceSchema, updateSeanceSchema } from './seances.validators';
+import { createSeanceSchema, updateSeanceSchema, listSeancesQuerySchema } from './seances.validators';
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.use(authenticate);
  *     responses:
  *       200: { description: Liste des seances }
  */
-router.get('/', seancesController.list);
+router.get('/', validate(listSeancesQuerySchema, 'query'), seancesController.list);
 
 /**
  * @openapi

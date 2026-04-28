@@ -9,9 +9,9 @@ function parseId(raw: string): number {
 }
 
 export const seancesController = {
-  async list(_req: Request, res: Response, next: NextFunction) {
+  async list(req: Request, res: Response, next: NextFunction) {
     try {
-      res.json(await seancesService.list());
+      res.json(await seancesService.list(req.query as any));
     } catch (err) {
       next(err);
     }

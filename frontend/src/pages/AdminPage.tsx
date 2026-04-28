@@ -18,9 +18,9 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const [u, s] = await Promise.all([usersApi.list(), seancesApi.list()]);
+      const [u, sr] = await Promise.all([usersApi.list(), seancesApi.list()]);
       setUsers(u);
-      setSeances(s);
+      setSeances(sr.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur');
     } finally {

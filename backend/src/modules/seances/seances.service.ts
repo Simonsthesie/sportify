@@ -1,7 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { BadRequest, Forbidden, NotFound } from '../../utils/errors';
 import { JwtPayload } from '../../utils/jwt';
-import { CreateSeanceInput, UpdateSeanceInput } from './seances.validators';
+import { CreateSeanceInput, UpdateSeanceInput, ListSeancesQuery } from './seances.validators';
 import { StatutReservation } from '@prisma/client';
 
 const seanceInclude = {
@@ -59,12 +59,47 @@ async function resolveCoachIdForCurrentUser(user: JwtPayload, requested?: number
 }
 
 export const seancesService = {
-  async list() {
-    const seances = await prisma.seance.findMany({
-      orderBy: { dateDebut: 'asc' },
-      include: seanceInclude,
-    });
-    return seances.map(format);
+  async list(query: ListSeancesQuery = { page: 1, limit: 20 }) {
+    const { q, coachId, lieu, dateFrom, dateTo, page, limit } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (coachId) where.coachId = coachId;
+    if (lieu) where.lieu = { contains: lieu };
+    if (q) {
+      where.OR = [
+        { titre: { contains: q } },
+        { description: { contains: q } },
+        { lieu: { contains: q } },
+      ];
+    }
+    if (dateFrom || dateTo) {
+      where.dateDebut = {
+        ...(dateFrom ? { gte: dateFrom } : {}),
+        ...(dateTo ? { lte: dateTo } : {}),
+      };
+    }
+
+    const [seances, total] = await Promise.all([
+      prisma.seance.findMany({
+        where,
+        orderBy: { dateDebut: 'asc' },
+        skip,
+        take: limit,
+        include: seanceInclude,
+      }),
+      prisma.seance.count({ where }),
+    ]);
+
+    return {
+      data: seances.map(format),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   async listForCoach(userId: number) {

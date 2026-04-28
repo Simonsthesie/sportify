@@ -11,8 +11,15 @@ export interface SeanceInput {
 }
 
 export const seancesApi = {
-  list() {
-    return api<Seance[]>('/seances');
+  list(params?: { q?: string; coachId?: number; lieu?: string; dateFrom?: string; dateTo?: string; page?: number; limit?: number }) {
+    const qs = params ? '?' + new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== '')
+          .map(([k, v]) => [k, String(v)])
+      )
+    ).toString() : '';
+    return api<{ data: Seance[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/seances' + qs);
   },
   listMine() {
     return api<Seance[]>('/seances/me');

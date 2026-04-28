@@ -31,3 +31,15 @@ export const updateSeanceSchema = z
 
 export type CreateSeanceInput = z.infer<typeof createSeanceSchema>;
 export type UpdateSeanceInput = z.infer<typeof updateSeanceSchema>;
+
+export const listSeancesQuerySchema = z.object({
+  q: z.string().optional(),
+  coachId: z.coerce.number().int().positive().optional(),
+  lieu: z.string().optional(),
+  dateFrom: z.coerce.date().optional(),
+  dateTo: z.coerce.date().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export type ListSeancesQuery = z.infer<typeof listSeancesQuerySchema>;
