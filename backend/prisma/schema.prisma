@@ -1,0 +1,98 @@
+// =====================================================================
+// Sportify Pro - Schema Prisma
+// =====================================================================
+// Genere le client Prisma a partir des entites metier.
+// Voir docs/02_MCD.md et docs/03_MLD.md pour la modelisation.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleLibelle {
+  ADMIN
+  COACH
+  CLIENT
+}
+
+enum StatutReservation {
+  CONFIRMEE
+  ANNULEE
+}
+
+model Role {
+  id           Int           @id @default(autoincrement())
+  libelle      RoleLibelle   @unique
+  utilisateurs Utilisateur[]
+
+  @@map("role")
+}
+
+model Utilisateur {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique @db.VarChar(180)
+  motDePasse   String        @map("mot_de_passe") @db.VarChar(255)
+  nom          String        @db.VarChar(100)
+  prenom       String        @db.VarChar(100)
+  roleId       Int           @map("role_id")
+  role         Role          @relation(fields: [roleId], references: [id])
+  coach        Coach?
+  reservations Reservation[]
+  creeLe       DateTime      @default(now()) @map("cree_le")
+  majLe        DateTime      @updatedAt @map("maj_le")
+
+  @@index([roleId])
+  @@map("utilisateur")
+}
+
+model Coach {
+  id             Int         @id @default(autoincrement())
+  utilisateurId  Int         @unique @map("utilisateur_id")
+  utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  specialite     String      @db.VarChar(120)
+  bio            String?     @db.Text
+  seances        Seance[]
+
+  @@map("coach")
+}
+
+model Seance {
+  id           Int           @id @default(autoincrement())
+  titre        String        @db.VarChar(150)
+  description  String?       @db.Text
+  dateDebut    DateTime      @map("date_debut")
+  dateFin      DateTime      @map("date_fin")
+  capaciteMax  Int           @map("capacite_max")
+  lieu         String?       @db.VarChar(150)
+  coachId      Int           @map("coach_id")
+  coach        Coach         @relation(fields: [coachId], references: [id])
+  reservations Reservation[]
+  creeLe       DateTime      @default(now()) @map("cree_le")
+  majLe        DateTime      @updatedAt @map("maj_le")
+
+  @@index([coachId])
+  @@index([dateDebut, dateFin])
+  @@map("seance")
+}
+
+model Reservation {
+  id        Int               @id @default(autoincrement())
+  clientId  Int               @map("client_id")
+  client    Utilisateur       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  seanceId  Int               @map("seance_id")
+  seance    Seance            @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+  statut    StatutReservation @default(CONFIRMEE)
+  creeLe    DateTime          @default(now()) @map("cree_le")
+  majLe     DateTime          @updatedAt @map("maj_le")
+
+  @@unique([clientId, seanceId], name: "uq_client_seance")
+  @@index([clientId])
+  @@index([seanceId])
+  @@index([statut])
+  @@map("reservation")
+}
