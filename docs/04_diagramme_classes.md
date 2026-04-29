@@ -1,4 +1,5 @@
 # Diagramme de classes (UML) - Sportify Pro
+**[Voir Diagramme de classe ](docs\Diagramme_classe.png)**
 
 ```mermaid
 classDiagram
