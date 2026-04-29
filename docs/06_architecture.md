@@ -37,32 +37,39 @@ flowchart LR
 | BDD            | MySQL 8                              | Stockage relationnel                          |
 | Admin BDD      | phpMyAdmin                           | Inspection / requetes manuelles               |
 | Doc API        | swagger-jsdoc + swagger-ui-express   | Documentation interactive `/api/docs`         |
-| Tests          | Jest + Supertest                     | Tests unitaires et d'integration              |
+| Tests          | Jest + ts-jest                       | Tests unitaires et d'integration              |
 | Conteneurs     | Docker + docker-compose              | Deploiement reproductible                     |
+| CI/CD          | GitHub Actions                       | Lint + tests + build a chaque push            |
 
 ## Couches du backend
 
 ```
 src/
-  config/        env vars, prisma client
-  middlewares/   auth (JWT), roles, error handler, validation
+  config/        env vars, prisma client, swagger
+  middlewares/   auth (JWT), requireRole (RBAC), validate (Zod), errorHandler
   modules/
     auth/        controller + service + routes + validators
-    users/
-    coaches/
-    seances/
-    reservations/
-  utils/         helpers (jwt, password, dates)
+    users/       CRUD admin + gestion profil (/me, /me/password)
+    coaches/     liste des coaches (GET /coaches)
+    seances/     CRUD + participants + filtres + pagination
+    reservations/ reservation + annulation + liste d'attente
+    avis/        notes et commentaires par seance
+    notifications/ notifications in-app (lu/non lu)
+  utils/         helpers (jwt, password, errors)
   app.ts         creation Express, routes globales
   server.ts      bootstrap (listen)
-  prisma/        schema.prisma + migrations
+prisma/
+  schema.prisma  modele de donnees (8 entites)
+  seed.ts        donnees de demonstration
+  migrations/    migrations SQL versionnees
 ```
 
 ## Securite
 
 - Mots de passe hashes avec bcrypt (10 rounds).
 - JWT signe HS256, expiration courte (2h par defaut).
-- Middleware d'authentification + middleware de role (RBAC).
-- Validation stricte des entrees (zod).
+- Middleware d'authentification + middleware de role (RBAC) : chaque route declare le role minimum requis.
+- Validation stricte des entrees avec Zod (schemas declares dans `*.validators.ts`).
 - CORS restreint a l'origine du frontend.
 - Helmet pour les headers HTTP de securite.
+- Toutes les FK en base ont `ON DELETE CASCADE` pour eviter les donnees orphelines.

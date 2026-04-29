@@ -18,6 +18,7 @@ classDiagram
         +Role role
         +sInscrire()
         +seConnecter()
+        +mettreAJourProfil()
     }
 
     class Coach {
@@ -25,6 +26,8 @@ classDiagram
         +string specialite
         +string bio
         +creerSeance()
+        +modifierSeance()
+        +supprimerSeance()
         +consulterPlanning()
         +voirParticipants()
     }
@@ -33,6 +36,7 @@ classDiagram
         +int id
         +string titre
         +string description
+        +string categorie
         +Date dateDebut
         +Date dateFin
         +int capaciteMax
@@ -49,9 +53,37 @@ classDiagram
         +annuler()
     }
 
+    class ListeAttente {
+        +int id
+        +int position
+        +Date creeLe
+        +rejoindre()
+        +quitter()
+    }
+
+    class Avis {
+        +int id
+        +int note
+        +string commentaire
+        +Date creeLe
+    }
+
+    class Notification {
+        +int id
+        +string message
+        +bool lu
+        +Date creeLe
+        +marquerLu()
+    }
+
     Role "1" <-- "*" Utilisateur : possede
     Utilisateur <|-- Coach : herite (1-1)
     Coach "1" --> "*" Seance : anime
     Utilisateur "1" --> "*" Reservation : effectue
     Seance "1" --> "*" Reservation : concerne
+    Utilisateur "1" --> "*" ListeAttente : inscrit
+    Seance "1" --> "*" ListeAttente : gere
+    Utilisateur "1" --> "*" Avis : redige
+    Seance "1" --> "*" Avis : recoit
+    Utilisateur "1" --> "*" Notification : recoit
 ```

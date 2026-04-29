@@ -175,16 +175,49 @@ Toutes les routes sont préfixées par `/api`. Documentation interactive : http:
 
 ### Réservations
 
-| Méthode | Route                          | Rôles requis |
-|---------|--------------------------------|--------------|
-| GET     | `/reservations/me`             | tout connecté |
-| GET     | `/reservations`                | ADMIN        |
-| POST    | `/reservations`                | CLIENT       |
-| PATCH   | `/reservations/:id/cancel`     | propriétaire ou ADMIN |
+| Méthode | Route                                     | Rôles requis          |
+|---------|-------------------------------------------|-----------------------|
+| GET     | `/reservations/me`                        | tout connecté         |
+| GET     | `/reservations`                           | ADMIN                 |
+| POST    | `/reservations`                           | CLIENT                |
+| PATCH   | `/reservations/:id/cancel`               | propriétaire ou ADMIN |
+| POST    | `/reservations/attente`                   | CLIENT                |
+| DELETE  | `/reservations/attente/:seanceId`         | CLIENT                |
+| GET     | `/reservations/attente/:seanceId/position`| CLIENT                |
+
+### Avis
+
+| Méthode | Route                   | Rôles requis |
+|---------|-------------------------|--------------|
+| POST    | `/avis`                 | CLIENT       |
+| GET     | `/avis/seance/:seanceId`| tout connecté|
+
+### Notifications
+
+| Méthode | Route                        | Rôles requis  |
+|---------|------------------------------|---------------|
+| GET     | `/notifications`             | tout connecté |
+| GET     | `/notifications/unread-count`| tout connecté |
+| PATCH   | `/notifications/:id/read`    | propriétaire  |
+| PATCH   | `/notifications/read-all`    | tout connecté |
+
+### Coaches
+
+| Méthode | Route      | Rôles requis  |
+|---------|------------|---------------|
+| GET     | `/coaches` | tout connecté |
+
+### Profil utilisateur
+
+| Méthode | Route              | Rôles requis  |
+|---------|--------------------|---------------|
+| GET     | `/users/me`        | tout connecté |
+| PATCH   | `/users/me`        | tout connecté |
+| PATCH   | `/users/me/password`| tout connecté|
 
 ## Tests
 
-Tests unitaires Jest sur le backend (utilitaires JWT/password, middleware d'auth, validators Zod).
+Tests unitaires et d'intégration Jest sur le backend (utilitaires JWT/password, middleware d'auth, validators Zod, routes d'intégration).
 
 ```bash
 cd backend
@@ -192,7 +225,7 @@ npm test
 ```
 
 ```
-Test Suites: 5 passed, 5 total
+Test Suites: 7 passed, 7 total
 Tests:       15 passed, 15 total
 ```
 
@@ -201,28 +234,42 @@ Tests:       15 passed, 15 total
 ```
 sportify/
 ├── backend/                  # API Node.js + Express + TS
-│   ├── prisma/               # Schéma Prisma + seed
+│   ├── prisma/
+│   │   ├── schema.prisma     # Modèle de données Prisma
+│   │   ├── seed.ts           # Données de démonstration
+│   │   └── migrations/       # Migrations SQL versionnées
 │   ├── src/
-│   │   ├── config/           # env, prisma client, swagger
-│   │   ├── middlewares/      # auth, validate, errorHandler
+│   │   ├── config/           # env vars, prisma client, swagger
+│   │   ├── middlewares/      # auth (JWT), roles (RBAC), validate, errorHandler
 │   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   ├── users/
-│   │   │   ├── seances/
-│   │   │   └── reservations/
-│   │   ├── utils/            # jwt, password, errors
-│   │   ├── app.ts            # création de l'app Express
+│   │   │   ├── auth/         # inscription, connexion, JWT
+│   │   │   ├── users/        # gestion utilisateurs + profil (/me)
+│   │   │   ├── coaches/      # liste des coachs
+│   │   │   ├── seances/      # CRUD séances + participants
+│   │   │   ├── reservations/ # réservations + annulation + liste d'attente
+│   │   │   ├── avis/         # notes et commentaires sur les séances
+│   │   │   └── notifications/# notifications in-app
+│   │   ├── utils/            # helpers (jwt, password, errors)
+│   │   ├── app.ts            # création de l'app Express + routes globales
 │   │   └── server.ts         # bootstrap (listen)
-│   ├── tests/                # Jest
+│   ├── tests/                # Jest (utils, middlewares, validators, integration)
 │   ├── Dockerfile
 │   └── package.json
 │
-├── frontend/                 # SPA React + Vite + Tailwind
+├── frontend/                 # SPA React + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── api/              # client HTTP (auth, seances, reservations, users)
-│   │   ├── components/       # Navbar, Alert, ProtectedRoute
-│   │   ├── context/          # AuthContext
-│   │   ├── pages/            # Login, Register, Seances, Mes resa, Coach, Admin
+│   │   ├── api/              # client HTTP (auth, seances, reservations, users, avis, notifications)
+│   │   ├── components/       # Navbar, Alert, ProtectedRoute, NotificationsDropdown
+│   │   ├── context/          # AuthContext, ThemeContext (dark mode)
+│   │   ├── pages/
+│   │   │   ├── LoginPage.tsx / RegisterPage.tsx
+│   │   │   ├── SeancesPage.tsx      # liste + filtres + réservation
+│   │   │   ├── MesReservationsPage.tsx  # historique + avis
+│   │   │   ├── CalendarPage.tsx     # calendrier interactif (react-big-calendar)
+│   │   │   ├── ProfilPage.tsx       # édition profil + stats
+│   │   │   ├── CoachPage.tsx        # planning + création/modification séances
+│   │   │   └── AdminPage.tsx        # gestion utilisateurs + toutes séances
+│   │   ├── types.ts          # interfaces TypeScript métier
 │   │   ├── utils/dates.ts
 │   │   ├── App.tsx
 │   │   └── main.tsx
@@ -230,7 +277,7 @@ sportify/
 │   ├── nginx.conf
 │   └── package.json
 │
-├── db/init/                  # Schéma SQL + seed (initialisation MySQL)
+├── db/init/                  # Schéma SQL initial + données de seed
 │   ├── 01_schema.sql
 │   └── 02_seed.sql
 │
@@ -243,6 +290,7 @@ sportify/
 │   ├── 06_architecture.md
 │   └── 07_wireframes.md
 │
+├── .github/workflows/ci.yml  # CI/CD GitHub Actions (lint + tests + build)
 ├── docker-compose.yml        # mysql + phpmyadmin + backend + frontend
 ├── .env.example
 └── README.md
@@ -259,11 +307,12 @@ sportify/
 | **Zod**                          | Validation déclarative côté API + dérivation des types TypeScript.                                  |
 | **Architecture en couches**      | `routes -> controller -> service -> orm` : séparation des responsabilités, testabilité.             |
 | **React + Vite + Tailwind**      | Hot reload, build rapide, UI moderne sans CSS custom lourd.                                         |
-| **React Context (Auth)**         | Volume d'état très limité, pas besoin de Redux.                                                     |
+| **React Context (Auth + Theme)** | Volume d'état limité, dark mode persisté en localStorage, pas besoin de Redux.                      |
 | **Docker multi-stage**           | Images de production allégées (backend `dist/`, frontend `nginx`).                                  |
 | **Swagger via JSDoc**            | Documentation co-localisée avec le code, toujours à jour.                                           |
 | **bcrypt 10 rounds**             | Bon compromis sécurité / performance.                                                               |
 | **Helmet + CORS restreint**      | Headers de sécurité par défaut, origine du frontend whitelistée uniquement.                         |
+| **GitHub Actions CI/CD**         | Lint + tests + build Docker automatisés à chaque push sur `main`.                                   |
 
 ## Livrables
 
@@ -279,7 +328,8 @@ sportify/
 | Script SQL                  | `db/init/01_schema.sql`, `02_seed.sql`     |
 | Schéma Prisma               | `backend/prisma/schema.prisma`             |
 | Documentation API           | Swagger sur `/api/docs`                    |
-| Tests unitaires             | `backend/tests/`                           |
+| Tests unitaires             | `backend/tests/` (7 suites, 15 tests)      |
+| CI/CD                       | `.github/workflows/ci.yml`                 |
 | Dockerfile / docker-compose | `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` |
 | README                      | Ce fichier                                 |
 

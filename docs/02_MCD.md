@@ -7,6 +7,11 @@ erDiagram
     COACH ||--o{ SEANCE : "anime"
     UTILISATEUR ||--o{ RESERVATION : "effectue"
     SEANCE ||--o{ RESERVATION : "concerne"
+    UTILISATEUR ||--o{ LISTE_ATTENTE : "inscrit à"
+    SEANCE ||--o{ LISTE_ATTENTE : "gère"
+    UTILISATEUR ||--o{ AVIS : "rédige"
+    SEANCE ||--o{ AVIS : "reçoit"
+    UTILISATEUR ||--o{ NOTIFICATION : "reçoit"
 
     ROLE {
         int id PK
@@ -32,6 +37,7 @@ erDiagram
         int id PK
         string titre
         string description
+        string categorie
         datetime date_debut
         datetime date_fin
         int capacite_max
@@ -45,6 +51,28 @@ erDiagram
         string statut "CONFIRMEE | ANNULEE"
         datetime cree_le
     }
+    LISTE_ATTENTE {
+        int id PK
+        int client_id FK
+        int seance_id FK
+        int position
+        datetime cree_le
+    }
+    AVIS {
+        int id PK
+        int client_id FK
+        int seance_id FK
+        int note "1 à 5"
+        string commentaire
+        datetime cree_le
+    }
+    NOTIFICATION {
+        int id PK
+        int user_id FK
+        string message
+        bool lu
+        datetime cree_le
+    }
 ```
 
 ## Cardinalités (Merise)
@@ -56,6 +84,11 @@ erDiagram
 | COACH ↔ SEANCE                | 1,1 — 0,n           | Une séance est animée par 1 coach                             |
 | UTILISATEUR ↔ RESERVATION     | 1,1 — 0,n           | Une réservation appartient à un client                        |
 | SEANCE ↔ RESERVATION          | 1,1 — 0,n           | Une réservation porte sur une séance                          |
+| UTILISATEUR ↔ LISTE_ATTENTE   | 1,1 — 0,n           | Un client peut être en attente sur plusieurs séances          |
+| SEANCE ↔ LISTE_ATTENTE        | 1,1 — 0,n           | Une séance gère une liste ordonnée d'attente                  |
+| UTILISATEUR ↔ AVIS            | 1,1 — 0,n           | Un client rédige un avis par séance suivie                    |
+| SEANCE ↔ AVIS                 | 1,1 — 0,n           | Une séance peut recevoir plusieurs avis                       |
+| UTILISATEUR ↔ NOTIFICATION    | 1,1 — 0,n           | Un utilisateur reçoit des notifications in-app                |
 
 ## Règles de gestion (RG)
 
@@ -65,5 +98,7 @@ erDiagram
 - **RG4** : Le nombre de réservations CONFIRMEES sur une séance ne peut excéder `capacite_max`.
 - **RG5** : Un client ne peut pas avoir deux réservations CONFIRMEES sur deux séances qui se chevauchent dans le temps.
 - **RG6** : Un client ne peut réserver qu'une seule fois la même séance (contrainte d'unicité `(client_id, seance_id)`).
-- **RG7** : Une réservation peut être annulée par son propriétaire (statut → `ANNULEE`).
+- **RG7** : Une réservation peut être annulée par son propriétaire (statut → `ANNULEE`). L'annulation promeut automatiquement le premier client en liste d'attente.
 - **RG8** : Seul un coach (le sien) ou un admin peut modifier/supprimer une séance.
+- **RG9** : Un client ne peut être inscrit qu'une seule fois en liste d'attente pour une séance donnée.
+- **RG10** : Un avis ne peut être rédigé qu'une seule fois par client et par séance.
