@@ -33,7 +33,10 @@ export const reservationsService = {
   },
 
   async create(user: JwtPayload, seanceId: number) {
-    const seance = await prisma.seance.findUnique({ where: { id: seanceId } });
+    const seance = await prisma.seance.findUnique({
+      where: { id: seanceId },
+      include: { coach: { include: { utilisateur: true } } },
+    });
     if (!seance) throw NotFound('Seance introuvable');
 
     if (seance.dateDebut.getTime() < Date.now()) {
@@ -71,24 +74,41 @@ export const reservationsService = {
       throw Conflict('Vous avez deja une reservation sur ce creneau (seance "' + overlap.seance.titre + '")');
     }
 
+    const client = await prisma.utilisateur.findUnique({ where: { id: user.sub } });
+    const clientNom = client ? `${client.prenom} ${client.nom}` : 'Un client';
+
+    let result;
     if (existing) {
-      return prisma.reservation.update({
+      result = await prisma.reservation.update({
         where: { id: existing.id },
         data: { statut: StatutReservation.CONFIRMEE },
         include: reservationInclude,
       });
+    } else {
+      result = await prisma.reservation.create({
+        data: { clientId: user.sub, seanceId, statut: StatutReservation.CONFIRMEE },
+        include: reservationInclude,
+      });
     }
 
-    return prisma.reservation.create({
-      data: { clientId: user.sub, seanceId, statut: StatutReservation.CONFIRMEE },
-      include: reservationInclude,
+    // Notifier le coach
+    await prisma.notification.create({
+      data: {
+        userId: seance.coach.utilisateurId,
+        message: `${clientNom} a reserve votre seance "${seance.titre}". (${placesPrises + 1}/${seance.capaciteMax} places)`,
+      },
     });
+
+    return result;
   },
 
   async cancel(user: JwtPayload, reservationId: number) {
     const reservation = await prisma.reservation.findUnique({
       where: { id: reservationId },
-      include: { seance: true },
+      include: {
+        seance: { include: { coach: true } },
+        client: { select: { id: true, nom: true, prenom: true } },
+      },
     });
     if (!reservation) throw NotFound('Reservation introuvable');
 
@@ -103,6 +123,16 @@ export const reservationsService = {
     await prisma.reservation.update({
       where: { id: reservationId },
       data: { statut: StatutReservation.ANNULEE },
+    });
+
+    const clientNom = `${reservation.client.prenom} ${reservation.client.nom}`;
+
+    // Notifier le coach de l'annulation
+    await prisma.notification.create({
+      data: {
+        userId: reservation.seance.coach.utilisateurId,
+        message: `${clientNom} a annule sa reservation pour votre seance "${reservation.seance.titre}".`,
+      },
     });
 
     // Promouvoir la premiere personne de la liste d'attente
