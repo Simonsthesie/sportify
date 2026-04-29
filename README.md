@@ -288,7 +288,10 @@ sportify/
 │   ├── 04_diagramme_classes.md
 │   ├── 05_user_stories.md
 │   ├── 06_architecture.md
-│   └── 07_wireframes.md
+│   ├── 07_wireframes.md
+│   ├── MCD.png               # Schéma MCD visuel (draw.io)
+│   ├── MLD.png               # Schéma MLD visuel (dbdiagram.io)
+│   └── Diagramme_classe.png  # Diagramme de classes UML visuel (draw.io)
 │
 ├── .github/workflows/ci.yml  # CI/CD GitHub Actions (lint + tests + build)
 ├── docker-compose.yml        # mysql + phpmyadmin + backend + frontend
@@ -321,7 +324,7 @@ sportify/
 | Code source structuré       | `backend/`, `frontend/`                    |
 | Historique Git              | https://github.com/Simonsthesie/sportify   |
 | Diagramme cas d'utilisation | `docs/01_cas_utilisation.md`               |
-| MCD / MLD / classes UML     | `docs/02_MCD.md`, `03_MLD.md`, `04_*.md`   |
+| MCD / MLD / classes UML     | `docs/02_MCD.md`, `03_MLD.md`, `04_*.md` + visuels PNG  |
 | User stories                | `docs/05_user_stories.md`                  |
 | Architecture 3-tiers        | `docs/06_architecture.md`                  |
 | Wireframes                  | [Figma](https://www.figma.com/design/If2TTc5TltELRbjzvLEs7p/Sprotify?node-id=0-1&t=YNK364imiRKDLna5-1) + `docs/07_wireframes.md` |
