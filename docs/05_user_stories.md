@@ -11,7 +11,7 @@ Format : *En tant que... je veux... afin de...*
 ## Client
 
 - **US-CLI-01** : En tant que client, je veux consulter la liste des séances disponibles afin de choisir laquelle réserver.
-- **US-CLI-02** : En tant que client, je veux filtrer les séances par date / coach / lieu afin de trouver rapidement ce qui m'intéresse. *(bonus)*
+- **US-CLI-02** : En tant que client, je veux filtrer les séances par date / coach / lieu afin de trouver rapidement ce qui m'intéresse.
 - **US-CLI-03** : En tant que client, je veux réserver une séance afin d'y participer.
 - **US-CLI-04** : En tant que client, je veux être empêché de réserver deux séances qui se chevauchent afin d'éviter les conflits.
 - **US-CLI-05** : En tant que client, je veux voir la liste de mes réservations afin de suivre mes séances à venir.

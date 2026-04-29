@@ -324,7 +324,7 @@ sportify/
 | MCD / MLD / classes UML     | `docs/02_MCD.md`, `03_MLD.md`, `04_*.md`   |
 | User stories                | `docs/05_user_stories.md`                  |
 | Architecture 3-tiers        | `docs/06_architecture.md`                  |
-| Wireframes                  | `docs/07_wireframes.md`                    |
+| Wireframes                  | [Figma](https://www.figma.com/design/If2TTc5TltELRbjzvLEs7p/Sprotify?node-id=0-1&t=YNK364imiRKDLna5-1) + `docs/07_wireframes.md` |
 | Script SQL                  | `db/init/01_schema.sql`, `02_seed.sql`     |
 | Schéma Prisma               | `backend/prisma/schema.prisma`             |
 | Documentation API           | Swagger sur `/api/docs`                    |
